@@ -4,12 +4,12 @@ const fetch = require('node-fetch');
 const open = require('open');
 const querystring = require('querystring');
 const crypto = require('crypto');
+const { BASE_URL } = require('./config');
 
 const { CLIENT_ID, CLIENT_SECRET } = process.env;
 const REDIRECT_URI = 'http://localhost:3000/callback';
-const BASE_URL = 'https://lego.abakus.no/authorization/oauth2';
-const AUTH_URL = `${BASE_URL}/authorize/`;
-const TOKEN_URL = `${BASE_URL}/token/`;
+const AUTH_URL = `${BASE_URL}/authorization/oauth2/authorize/`;
+const TOKEN_URL = `${BASE_URL}/authorization/oauth2/token/`;
 
 const state = crypto.randomBytes(64).toString('hex');
 const app = express();
@@ -26,6 +26,8 @@ app.get('/callback', async (req, res) => {
 
   try {
     await retrieveToken(req.query.code);
+    res.send('Open your terminal to see the retrieved access token.');
+    process.exit(0);
   } catch (e) {
     console.error('Failed retrieving token', e);
     process.exit(1);
@@ -65,9 +67,8 @@ async function retrieveToken(code) {
   });
 
   const { access_token, refresh_token } = await res.json();
-  console.log('Access token:', access_token);
-  console.log('Refresh token:', refresh_token);
-  process.exit(0);
+  console.log(`ACCESS_TOKEN=${access_token}`);
+  console.log(`REFRESH_TOKEN=${refresh_token}`);
 }
 
 app.listen(3000, startOauth);
