@@ -3,12 +3,25 @@ const fetch = require('node-fetch');
 const dateFns = require('date-fns');
 const { promisify } = require('util');
 const { IncomingWebhook } = require('@slack/client');
-const { API_URL } = require('./config');
+const { API_URL, WEBAPP_URL } = require('./config');
 
 // Fetch timeout in milliseconds:
 const TIMEOUT = 2500;
 const { ACCESS_TOKEN } = process.env;
+const EVENT_COLORS = {
+  company_presentation: '#A1C34A',
+  lunch_presentation: '#A1C34A',
+  course: '#52B0EC',
+  party: '#FCD748',
+  social: '#B11C11',
+  event: '#B11C11',
+  other: '#111111'
+};
 
+/**
+ * Small wrapper around fetch that retries whenever a request exceeds TIMEOUT
+ * ms, and throws an error for status codes above 400.
+ */
 async function callAPI(url) {
   try {
     const res = await fetch(url, {
@@ -56,29 +69,56 @@ async function retrieveEvents() {
   }
 
   const allEvents = await Promise.all(
-    events.map(({ id }) => callAPI(`${API_URL}/events/${id}/`))
+    events
+      .filter(event => !event.isAbakomOnly)
+      .map(({ id }) => callAPI(`${API_URL}/events/${id}/`))
   );
 
   return allEvents.filter(opensToday);
 }
 
-async function notifySlack(events) {
-  const messages = events.reduce(
-    (total, event) =>
-      total.concat(
-        event.pools.map(pool => {
-          const startTime = dateFns.format(pool.activationDate, 'H:mm');
-          return `${pool.name}: ${event.title} (åpner klokken ${startTime})`;
-        })
-      ),
-    []
-  );
+/**
+ * Builds a Slack attachment for each event,
+ * see https://api.slack.com/docs/message-attachments.
+ */
+function buildAttachments(events) {
+  return events.map((event, i) => {
+    const pretext = i === 0 ? 'Arrangementer med påmelding i dag:' : '';
+    const fields = event.pools.map(pool => {
+      const startTime = dateFns.format(pool.activationDate, 'H:mm');
+      return {
+        title: pool.name,
+        value: `Åpner klokken ${startTime}`
+      };
+    });
 
-  const webhook = new IncomingWebhook(process.env.WEBHOOK_URL);
+    return {
+      pretext,
+      fields,
+      color: EVENT_COLORS[event.eventType],
+      title: event.title,
+      title_link: `${WEBAPP_URL}/events/${event.id}`,
+      author_name: 'Abakus',
+      author_icon: 'https://abakus.no/icon-48x48.png',
+      text: event.description,
+      thumb_url: event.cover
+    };
+  });
+}
+
+/**
+ * Posts the given events to Slack through an incoming webhook,
+ * see https://api.slack.com/incoming-webhooks.
+ */
+async function notifySlack(events) {
+  const webhook = new IncomingWebhook(process.env.WEBHOOK_URL, {
+    username: 'Abakus',
+    icon_url: 'https://abakus.no/icon-512x512.png'
+  });
+
   webhook.send = promisify(webhook.send);
-  await webhook.send(
-    `Arrangementer med påmelding i dag:\n${messages.join('\n')}`
-  );
+  const attachments = buildAttachments(events);
+  await webhook.send({ attachments });
 }
 
 async function run() {
