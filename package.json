@@ -9,12 +9,13 @@
     "token": "node token",
     "start": "node index",
     "pretoken": "check-env CLIENT_ID CLIENT_SECRET",
-    "prestart": "check-env ACCESS_TOKEN REFRESH_TOKEN"
+    "prestart": "check-env ACCESS_TOKEN REFRESH_TOKEN WEBHOOK_URL"
   },
   "prettier": {
     "singleQuote": true
   },
   "dependencies": {
+    "@slack/client": "^4.0.1",
     "check-env": "^1.3.0",
     "date-fns": "^1.29.0",
     "form-data": "^2.3.2",
