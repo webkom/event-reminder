@@ -8,11 +8,22 @@
   "scripts": {
     "token": "node token",
     "start": "node index",
+    "test": "yarn lint",
     "pretoken": "check-env CLIENT_ID CLIENT_SECRET",
-    "prestart": "check-env ACCESS_TOKEN REFRESH_TOKEN WEBHOOK_URL"
+    "prestart": "check-env ACCESS_TOKEN REFRESH_TOKEN WEBHOOK_URL",
+    "lint": "yarn lint:prettier && yarn lint:eslint",
+    "lint:eslint": "eslint .",
+    "lint:prettier": "prettier '**/*.js' --list-different",
+    "prettier": "prettier '**/*.{js,md}' --write"
   },
   "prettier": {
     "singleQuote": true
+  },
+  "eslintConfig": {
+    "extends": ["prettier"],
+    "parserOptions": {
+      "ecmaVersion": 8
+    }
   },
   "dependencies": {
     "@slack/client": "^4.0.1",
@@ -22,6 +33,8 @@
     "node-fetch": "^2.1.1"
   },
   "devDependencies": {
+    "eslint": "^4.19.0",
+    "eslint-config-prettier": "^2.9.0",
     "express": "^4.16.3",
     "open": "^0.0.5",
     "prettier": "^1.11.1"
