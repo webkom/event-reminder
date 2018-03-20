@@ -1,4 +1,4 @@
-# upcoming-events [![DroneCI](https://ci.abakus.no/api/badges/webkom/upcoming-events/status.svg?branch=master)](https://ci.abakus.no/webkom/upcoming-events)
+# event-reminder [![DroneCI](https://ci.abakus.no/api/badges/webkom/event-reminder/status.svg?branch=master)](https://ci.abakus.no/webkom/event-reminder)
 
 > Posts events opening today to Slack. Built as an example application for the [LEGO API](https://https://github.com/webkom/lego).
 
@@ -6,7 +6,7 @@
 
 ## Installation
 
-upcoming-events needs at least version 7.6 of Node.js, and
+event-reminder needs at least version 7.6 of Node.js, and
 [yarn](https://yarnpkg.com/en/) installed.
 
 ```bash
