@@ -10,17 +10,20 @@
     "start": "node index",
     "test": "yarn lint",
     "pretoken": "check-env CLIENT_ID CLIENT_SECRET",
-    "prestart": "check-env ACCESS_TOKEN REFRESH_TOKEN WEBHOOK_URL",
+    "prestart": "check-env CLIENT_ID CLIENT_SECRET ACCESS_TOKEN REFRESH_TOKEN WEBHOOK_URL",
     "lint": "yarn lint:prettier && yarn lint:eslint",
     "lint:eslint": "eslint .",
     "lint:prettier": "prettier '**/*.js' --list-different",
-    "prettier": "prettier '**/*.{js,md}' --write"
+    "prettier": "prettier '**/*.js' --write"
   },
   "prettier": {
-    "singleQuote": true
+    "singleQuote": true,
+    "printWidth": 100
   },
   "eslintConfig": {
-    "extends": ["prettier"],
+    "extends": [
+      "prettier"
+    ],
     "parserOptions": {
       "ecmaVersion": 8
     }

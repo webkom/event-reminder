@@ -1,15 +1,13 @@
 const express = require('express');
 const FormData = require('form-data');
-const fetch = require('node-fetch');
 const open = require('open');
 const querystring = require('querystring');
 const crypto = require('crypto');
-const { BASE_URL } = require('./config');
+const { retrieveTokens } = require('./utils');
+const { BASE_URL, REDIRECT_URI } = require('./config');
 
-const { CLIENT_ID, CLIENT_SECRET } = process.env;
-const REDIRECT_URI = 'http://localhost:3000/callback';
+const { CLIENT_ID } = process.env;
 const AUTH_URL = `${BASE_URL}/authorization/oauth2/authorize/`;
-const TOKEN_URL = `${BASE_URL}/authorization/oauth2/token/`;
 
 const state = crypto.randomBytes(64).toString('hex');
 const app = express();
@@ -25,7 +23,7 @@ app.get('/callback', async (req, res) => {
   }
 
   try {
-    await retrieveToken(req.query.code);
+    await retrieveInitialTokens(req.query.code);
     res.send('Open your terminal to see the retrieved access token.');
     process.exit(0);
   } catch (e) {
@@ -52,23 +50,10 @@ function startOauth() {
  * POST to TOKEN_URL to retrieve an access and refresh token pair
  * for the given authorization code.
  */
-async function retrieveToken(code) {
-  const form = new FormData();
-  form.append('grant_type', 'authorization_code');
-  form.append('client_id', CLIENT_ID);
-  form.append('client_secret', CLIENT_SECRET);
-  form.append('code', code);
-  form.append('redirect_uri', REDIRECT_URI);
-
-  const res = await fetch(TOKEN_URL, {
-    method: 'POST',
-    body: form,
-    headers: form.getHeaders()
-  });
-
-  const { access_token, refresh_token } = await res.json();
-  console.log(`ACCESS_TOKEN=${access_token}`);
-  console.log(`REFRESH_TOKEN=${refresh_token}`);
+async function retrieveInitialTokens(code) {
+  const { access, refresh } = await retrieveTokens(code);
+  console.log(`ACCESS_TOKEN=${access}`);
+  console.log(`REFRESH_TOKEN=${refresh}`);
 }
 
 app.listen(3000, startOauth);
