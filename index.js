@@ -7,6 +7,7 @@ const nb = require('date-fns/locale/nb');
 const { promisify } = require('util');
 const { IncomingWebhook } = require('@slack/client');
 const { API_URL, WEBAPP_URL } = require('./config');
+const { CLIENT_SECRET } = process.env;
 const { callAPI, refreshTokens } = require('./utils');
 
 // Filename where the latest refresh token will be stored locally:
@@ -68,15 +69,17 @@ function opensToday(event) {
 async function retrieveEvents() {
   const date = dateFns.format(new Date(), 'YYYY-MM-DD');
   const qs = querystring.stringify({ date_after: date, page_size: 5 });
-  let res = await callAPI(`${API_URL}/events/?${qs}`);
+  let res = await callAPI(`${API_URL}/events/?${qs}`, accessToken);
   let events = res.results;
   while (res.next) {
-    res = await callAPI(res.next);
+    res = await callAPI(res.next, accessToken);
     events = events.concat(res.results);
   }
 
   const allEvents = await Promise.all(
-    events.filter(event => !event.isAbakomOnly).map(({ id }) => callAPI(`${API_URL}/events/${id}/`))
+    events
+      .filter(event => !event.isAbakomOnly)
+      .map(({ id }) => callAPI(`${API_URL}/events/${id}/`, accessToken))
   );
 
   return allEvents.filter(opensToday);
@@ -131,7 +134,9 @@ async function notifySlack(events) {
 
 async function run() {
   try {
-    accessToken = await initializeTokens();
+    if (CLIENT_SECRET) {
+      accessToken = await initializeTokens();
+    }
     const events = await retrieveEvents();
     if (events.length > 0) {
       await notifySlack(events);
