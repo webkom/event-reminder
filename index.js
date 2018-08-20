@@ -85,6 +85,19 @@ async function retrieveEvents() {
   return allEvents.filter(opensToday);
 }
 
+function getActiveFrom(pool) {
+  const time = dateFns.format(pool.activationDate, 'H:mm');
+  const fullDate = dateFns.format(pool.activationDate, 'D. MMMM YYYY HH:mm');
+  if (dateFns.isToday(pool.activationDate)) {
+    return `Åpner klokken ${time}`;
+  }
+  if (dateFns.isFuture(pool.activationDate)) {
+    return `Åpner ${fullDate}`;
+  }
+
+  return `Allerede åpen!`;
+}
+
 /**
  * Builds a Slack attachment for each event,
  * see https://api.slack.com/docs/message-attachments.
@@ -93,10 +106,9 @@ function buildAttachments(events) {
   return events.map((event, i) => {
     const pretext = i === 0 ? 'Arrangementer med påmelding i dag:' : '';
     const fields = event.pools.map(pool => {
-      const activeFrom = dateFns.format(pool.activationDate, 'H:mm');
       return {
         title: pool.name,
-        value: `Åpner klokken ${activeFrom}`
+        value: getActiveFrom(pool)
       };
     });
 
@@ -122,14 +134,8 @@ function buildAttachments(events) {
  * see https://api.slack.com/incoming-webhooks.
  */
 async function notifySlack(events) {
-  const webhook = new IncomingWebhook(process.env.WEBHOOK_URL, {
-    username: 'Abakus',
-    icon_url: 'https://abakus.no/icon-512x512.png'
-  });
-
-  webhook.send = promisify(webhook.send);
   const attachments = buildAttachments(events);
-  await webhook.send({ attachments });
+  console.log(JSON.stringify(attachments));
 }
 
 async function run() {
@@ -139,6 +145,7 @@ async function run() {
     }
     const events = await retrieveEvents();
     if (events.length > 0) {
+      events.forEach(event => console.log(` - ${event.title} `));
       await notifySlack(events);
     }
   } catch (e) {
