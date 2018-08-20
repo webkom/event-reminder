@@ -134,8 +134,14 @@ function buildAttachments(events) {
  * see https://api.slack.com/incoming-webhooks.
  */
 async function notifySlack(events) {
+  const webhook = new IncomingWebhook(process.env.WEBHOOK_URL, {
+    username: 'Abakus',
+    icon_url: 'https://abakus.no/icon-512x512.png'
+  });
+
+  webhook.send = promisify(webhook.send);
   const attachments = buildAttachments(events);
-  console.log(JSON.stringify(attachments));
+  await webhook.send({ attachments });
 }
 
 async function run() {
