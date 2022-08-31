@@ -1,4 +1,4 @@
-# event-reminder [![DroneCI]([![Build Status](https://ci.webkom.dev/api/badges/webkom/event-reminder/status.svg)](https://ci.webkom.dev/webkom/event-reminder))](https://ci.webkom.dev/webkom/event-reminder)
+# event-reminder [![Build Status](https://ci.webkom.dev/api/badges/webkom/event-reminder/status.svg)](https://ci.webkom.dev/webkom/event-reminder)
 
 > Posts events opening today to Slack. Built as an example application for the [LEGO API](https://https://github.com/webkom/lego).
 
