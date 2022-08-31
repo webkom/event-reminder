@@ -1,4 +1,4 @@
-# event-reminder [![DroneCI](https://ci.abakus.no/api/badges/webkom/event-reminder/status.svg?branch=master)](https://ci.abakus.no/webkom/event-reminder)
+# event-reminder [![DroneCI]([![Build Status](https://ci.webkom.dev/api/badges/webkom/event-reminder/status.svg)](https://ci.webkom.dev/webkom/event-reminder))](https://ci.webkom.dev/webkom/event-reminder)
 
 > Posts events opening today to Slack. Built as an example application for the [LEGO API](https://https://github.com/webkom/lego).
 
@@ -20,6 +20,7 @@ This is what the application uses to post the daily reminders, and you can
 create one in your Slack's [integration settings](https://my.slack.com/services/new/incoming-webhook/).
 
 To run without user authentication, the application can be started with:
+
 ```bash
 $ WEBHOOK_URL=... yarn start
 $ # To run requests against the real API instead of
@@ -37,7 +38,6 @@ $ CLIENT_ID=... CLIENT_SECRET=... yarn token
 $ # This should open a browser window where you can complete the OAuth2 sign-in
 $ # process. After that is done you'll get an `ACCESS_TOKEN` and a `REFRESH_TOKEN`.
 ```
-
 
 At this point you should have all the required environment variables:
 
