@@ -26,9 +26,9 @@ steps:
     settings:
       repo: abakus/event-reminder
       username:
-        from_secret: docker_username
+        from_secret: dockerhub_username
       password:
-        from_secret: docker_password
+        from_secret: dockerhub_password
       tags:
         - ${DRONE_BRANCH}-${DRONE_COMMIT_SHA:0:7}
         - latest
