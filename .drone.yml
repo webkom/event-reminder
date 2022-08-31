@@ -18,11 +18,11 @@ steps:
   - name: docker
     image: plugins/docker
     depends_on:
-      - test
+      - build
     when:
       event: [push]
       branch:
-        - build
+        - master
     settings:
       repo: abakus/event-reminder
       username:
