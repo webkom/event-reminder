@@ -1,20 +1,36 @@
-pipeline:
-  build:
-    image: node:8
+---
+kind: pipeline
+name: default
+type: docker
+
+trigger:
+  event:
+    exclude:
+      - pull_request
+
+steps:
+  - name: build
+    image: node:16
     commands:
       - yarn
       - yarn test
-  docker:
+
+  - name: docker
     image: plugins/docker
+    depends_on:
+      - test
     when:
+      event: [push]
       branch:
-        - master
-      event: push
-      status: success
-    repo: abakus/event-reminder
-    secrets: [ docker_username, docker_password ]
-    tags:
-      - ${DRONE_BRANCH}-${DRONE_COMMIT_SHA:0:7}
-      - latest
-    build_args:
-      - RELEASE=${DRONE_BRANCH}-${DRONE_COMMIT_SHA:0:7}
+        - build
+    settings:
+      repo: abakus/event-reminder
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+      tags:
+        - ${DRONE_BRANCH}-${DRONE_COMMIT_SHA:0:7}
+        - latest
+      build_args:
+        - RELEASE=${DRONE_BRANCH}-${DRONE_COMMIT_SHA:0:7}
