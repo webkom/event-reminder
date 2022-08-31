@@ -1,4 +1,4 @@
-FROM node:8
+FROM node:16
 MAINTAINER Abakus <webkom@abakus.no>
 
 ARG RELEASE

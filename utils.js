@@ -24,8 +24,9 @@ async function fetchJson(url, options) {
  */
 exports.callAPI = async function callAPI(url, accessToken, options) {
   try {
+    const headers = accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
     const allOptions = Object.assign({}, options, {
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: headers,
       timeout: TIMEOUT
     });
 
