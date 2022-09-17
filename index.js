@@ -98,6 +98,30 @@ function getActiveFrom(pool) {
   return `Allerede åpen!`;
 }
 
+function getJobType(jobType) {
+  switch (jobType) {
+    case 'full_time':
+      return 'Fulltid';
+    case 'summer_job':
+      return 'Sommerjobb';
+    default:
+      return jobType;
+  }
+}
+
+function getJobYears(fromYear, toYear) {
+  return fromYear === toYear ? `${fromYear}. Klasse` : `${fromYear}. - ${toYear}. Klasse`;
+}
+
+async function retrieveJoblistings() {
+  const today = new Date();
+  const yesterday = new Date().setDate(today.getDate() - 1);
+  const date = dateFns.format(yesterday, 'YYYY-MM-DD');
+  const qs = querystring.stringify({ created_after: date });
+  let res = await callAPI(`${API_URL}/joblistings/?${qs}`, accessToken);
+  return res.results;
+}
+
 /**
  * Builds a Slack attachment for each event,
  * see https://api.slack.com/docs/message-attachments.
@@ -129,6 +153,69 @@ function buildAttachments(events) {
   });
 }
 
+function buildJoblistingBlocks(joblistings) {
+  const blocks = joblistings.flatMap((joblisting, i) => {
+    const pretext = i === 0 ? 'Nye jobbanonser:' : '';
+
+    const deadline = dateFns.format(joblisting.deadline, 'D. MMMM YYYY HH:mm', { locale: nb });
+
+    return [
+      {
+        type: 'section',
+        fields: [
+          {
+            type: 'mrkdwn',
+            text: `*<${WEBAPP_URL}/joblistings/${joblisting.id}|${joblisting.title}>*`
+          },
+          {
+            type: 'mrkdwn',
+            text: `*Type:* ${getJobType(joblisting.jobType)}`
+          },
+          {
+            type: 'mrkdwn',
+            text: `${joblisting.company.name}`
+          },
+          {
+            type: 'mrkdwn',
+            text: `*Sted*: ${joblisting.workplaces?.map(w => w.town).join(', ') || '_ukjent_'}`
+          },
+          {
+            type: 'mrkdwn',
+            text: `*Årstrinn*: ${getJobYears(joblisting.fromYear, joblisting.toYear)}`
+          }
+        ],
+        accessory: {
+          type: 'image',
+          image_url: joblisting.company.thumbnail,
+          alt_text: `${joblisting.company.name} logo`
+        }
+      },
+      {
+        type: 'context',
+        elements: [
+          {
+            type: 'plain_text',
+            text: `Søknadsfrist ${deadline}`
+          }
+        ]
+      },
+      {
+        type: 'divider'
+      }
+    ];
+  });
+
+  const header = {
+    type: 'header',
+    text: {
+      type: 'plain_text',
+      text: 'Nye jobbanonser i dag:'
+    }
+  };
+
+  return [header, ...blocks];
+}
+
 /**
  * Posts the given events to Slack through an incoming webhook,
  * see https://api.slack.com/incoming-webhooks.
@@ -144,6 +231,20 @@ async function notifySlack(events) {
   await webhook.send({ attachments });
 }
 
+async function notifySlackJoblistings(joblistings) {
+  const webhook = new IncomingWebhook(process.env.WEBHOOK_URL_JOBLISTINGS, {
+    username: 'Abakus',
+    icon_url: 'https://abakus.no/icon-512x512.png'
+  });
+
+  webhook.send = promisify(webhook.send);
+  const blocks = buildJoblistingBlocks(
+    joblistings.slice(joblistings.length - 4, joblistings.length - 1)
+  );
+  console.log(JSON.stringify({ text: 'Nye jobbanonser i dag', blocks }));
+  await webhook.send({ text: 'Nye jobbanonser i dag', blocks });
+}
+
 async function run() {
   try {
     if (CLIENT_SECRET) {
@@ -153,6 +254,14 @@ async function run() {
     if (events.length > 0) {
       events.forEach(event => console.log(` - ${event.title} `));
       await notifySlack(events);
+    }
+
+    const joblistings = await retrieveJoblistings();
+    if (joblistings.length > 0) {
+      joblistings.forEach(joblisting =>
+        console.log(` - ${joblisting.company.name}: ${joblisting.title}`)
+      );
+      await notifySlackJoblistings(joblistings);
     }
   } catch (e) {
     console.error('Error', e);
