@@ -40,7 +40,7 @@ function startOauth() {
     state,
     client_id: CLIENT_ID,
     response_type: 'code',
-    redirect_uri: REDIRECT_URI
+    redirect_uri: REDIRECT_URI,
   });
 
   open(`${AUTH_URL}?${qs}`);

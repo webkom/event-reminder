@@ -20,7 +20,7 @@ const EVENT_COLORS = {
   party: '#FCD748',
   social: '#B11C11',
   event: '#B11C11',
-  other: '#111111'
+  other: '#111111',
 };
 
 // Stores the access token retrieved by refreshAccessToken:
@@ -37,7 +37,7 @@ function getInitialTokens() {
     if (e.code === 'MODULE_NOT_FOUND') {
       return {
         access: process.env.ACCESS_TOKEN,
-        refresh: process.env.REFRESH_TOKEN
+        refresh: process.env.REFRESH_TOKEN,
       };
     }
 
@@ -78,7 +78,7 @@ async function retrieveEvents() {
 
   const allEvents = await Promise.all(
     events
-      .filter(event => !event.isAbakomOnly)
+      .filter((event) => !event.isAbakomOnly)
       .map(({ id }) => callAPI(`${API_URL}/events/${id}/`, accessToken))
   );
 
@@ -129,10 +129,10 @@ async function retrieveJoblistings() {
 function buildAttachments(events) {
   return events.map((event, i) => {
     const pretext = i === 0 ? 'Arrangementer med påmelding i dag:' : '';
-    const fields = event.pools.map(pool => {
+    const fields = event.pools.map((pool) => {
       return {
         title: pool.name,
-        value: getActiveFrom(pool)
+        value: getActiveFrom(pool),
       };
     });
 
@@ -148,7 +148,7 @@ function buildAttachments(events) {
       author_name: 'Abakus',
       author_icon: 'https://abakus.no/icon-48x48.png',
       text: event.description,
-      thumb_url: event.cover
+      thumb_url: event.cover,
     };
   });
 }
@@ -165,43 +165,43 @@ function buildJoblistingBlocks(joblistings) {
         fields: [
           {
             type: 'mrkdwn',
-            text: `*<${WEBAPP_URL}/joblistings/${joblisting.id}|${joblisting.title}>*`
+            text: `*<${WEBAPP_URL}/joblistings/${joblisting.id}|${joblisting.title}>*`,
           },
           {
             type: 'mrkdwn',
-            text: `*Type:* ${getJobType(joblisting.jobType)}`
+            text: `*Type:* ${getJobType(joblisting.jobType)}`,
           },
           {
             type: 'mrkdwn',
-            text: `${joblisting.company.name}`
+            text: `${joblisting.company.name}`,
           },
           {
             type: 'mrkdwn',
-            text: `*Sted*: ${joblisting.workplaces?.map(w => w.town).join(', ') || '_ukjent_'}`
+            text: `*Sted*: ${joblisting.workplaces.map((w) => w.town).join(', ') || '_ukjent_'}`,
           },
           {
             type: 'mrkdwn',
-            text: `*Årstrinn*: ${getJobYears(joblisting.fromYear, joblisting.toYear)}`
-          }
+            text: `*Årstrinn*: ${getJobYears(joblisting.fromYear, joblisting.toYear)}`,
+          },
         ],
         accessory: {
           type: 'image',
           image_url: joblisting.company.thumbnail,
-          alt_text: `${joblisting.company.name} logo`
-        }
+          alt_text: `${joblisting.company.name} logo`,
+        },
       },
       {
         type: 'context',
         elements: [
           {
             type: 'plain_text',
-            text: `Søknadsfrist ${deadline}`
-          }
-        ]
+            text: `Søknadsfrist ${deadline}`,
+          },
+        ],
       },
       {
-        type: 'divider'
-      }
+        type: 'divider',
+      },
     ];
   });
 
@@ -209,8 +209,8 @@ function buildJoblistingBlocks(joblistings) {
     type: 'header',
     text: {
       type: 'plain_text',
-      text: 'Nye jobbanonser i dag:'
-    }
+      text: 'Nye jobbanonser i dag:',
+    },
   };
 
   return [header, ...blocks];
@@ -223,7 +223,7 @@ function buildJoblistingBlocks(joblistings) {
 async function notifySlack(events) {
   const webhook = new IncomingWebhook(process.env.WEBHOOK_URL, {
     username: 'Abakus',
-    icon_url: 'https://abakus.no/icon-512x512.png'
+    icon_url: 'https://abakus.no/icon-512x512.png',
   });
 
   webhook.send = promisify(webhook.send);
@@ -234,7 +234,7 @@ async function notifySlack(events) {
 async function notifySlackJoblistings(joblistings) {
   const webhook = new IncomingWebhook(process.env.WEBHOOK_URL_JOBLISTINGS, {
     username: 'Abakus',
-    icon_url: 'https://abakus.no/icon-512x512.png'
+    icon_url: 'https://abakus.no/icon-512x512.png',
   });
 
   webhook.send = promisify(webhook.send);
@@ -252,13 +252,13 @@ async function run() {
     }
     const events = await retrieveEvents();
     if (events.length > 0) {
-      events.forEach(event => console.log(` - ${event.title} `));
+      events.forEach((event) => console.log(` - ${event.title} `));
       await notifySlack(events);
     }
 
     const joblistings = await retrieveJoblistings();
     if (joblistings.length > 0) {
-      joblistings.forEach(joblisting =>
+      joblistings.forEach((joblisting) =>
         console.log(` - ${joblisting.company.name}: ${joblisting.title}`)
       );
       await notifySlackJoblistings(joblistings);
