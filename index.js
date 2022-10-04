@@ -104,6 +104,9 @@ function getJobType(jobType) {
       return 'Fulltid';
     case 'summer_job':
       return 'Sommerjobb';
+    case 'part_time':
+      return 'Deltid';
+      return 'Sommerjobb';
     default:
       return jobType;
   }
@@ -118,7 +121,7 @@ async function retrieveJoblistings() {
   const yesterday = new Date().setDate(today.getDate() - 1);
   const date = dateFns.format(yesterday, 'YYYY-MM-DD');
   const qs = querystring.stringify({ created_after: date });
-  let res = await callAPI(`${API_URL}/joblistings/?${qs}`, accessToken);
+  const res = await callAPI(`${API_URL}/joblistings/?${qs}`, accessToken);
   return res.results;
 }
 
@@ -155,8 +158,6 @@ function buildAttachments(events) {
 
 function buildJoblistingBlocks(joblistings) {
   const blocks = joblistings.flatMap((joblisting, i) => {
-    const pretext = i === 0 ? 'Nye jobbanonser:' : '';
-
     const deadline = dateFns.format(joblisting.deadline, 'D. MMMM YYYY HH:mm', { locale: nb });
 
     return [
@@ -238,10 +239,7 @@ async function notifySlackJoblistings(joblistings) {
   });
 
   webhook.send = promisify(webhook.send);
-  const blocks = buildJoblistingBlocks(
-    joblistings.slice(joblistings.length - 4, joblistings.length - 1)
-  );
-  console.log(JSON.stringify({ text: 'Nye jobbanonser i dag', blocks }));
+  const blocks = buildJoblistingBlocks(joblistings);
   await webhook.send({ text: 'Nye jobbanonser i dag', blocks });
 }
 
