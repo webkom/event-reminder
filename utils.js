@@ -27,7 +27,7 @@ exports.callAPI = async function callAPI(url, accessToken, options) {
     const headers = accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
     const allOptions = Object.assign({}, options, {
       headers: headers,
-      timeout: TIMEOUT
+      timeout: TIMEOUT,
     });
 
     return await fetchJson(url, allOptions);
@@ -61,7 +61,7 @@ exports.retrieveTokens = async function retrieveTokens(code) {
   const body = await fetchJson(TOKEN_URL, {
     method: 'POST',
     body: form,
-    headers: form.getHeaders()
+    headers: form.getHeaders(),
   });
 
   return { access: body.access_token, refresh: body.refresh_token };
@@ -79,8 +79,8 @@ exports.refreshTokens = async function refreshTokens(access, refresh) {
     method: 'POST',
     body: form,
     headers: Object.assign({}, form.getHeaders(), {
-      Authorization: `Bearer ${access}`
-    })
+      Authorization: `Bearer ${access}`,
+    }),
   });
 
   return { access: body.access_token, refresh: body.refresh_token };

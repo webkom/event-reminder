@@ -22,7 +22,7 @@ create one in your Slack's [integration settings](https://my.slack.com/services/
 To run without user authentication, the application can be started with:
 
 ```bash
-$ WEBHOOK_URL=... yarn start
+$ WEBHOOK_URL=... WEBHOOK_URL_JOBLISTINGS=... yarn start
 $ # To run requests against the real API instead of
 $ # the staging version, set NODE_ENV=production as well.
 ```

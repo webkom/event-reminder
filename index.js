@@ -20,7 +20,7 @@ const EVENT_COLORS = {
   party: '#FCD748',
   social: '#B11C11',
   event: '#B11C11',
-  other: '#111111'
+  other: '#111111',
 };
 
 // Stores the access token retrieved by refreshAccessToken:
@@ -37,7 +37,7 @@ function getInitialTokens() {
     if (e.code === 'MODULE_NOT_FOUND') {
       return {
         access: process.env.ACCESS_TOKEN,
-        refresh: process.env.REFRESH_TOKEN
+        refresh: process.env.REFRESH_TOKEN,
       };
     }
 
@@ -78,7 +78,7 @@ async function retrieveEvents() {
 
   const allEvents = await Promise.all(
     events
-      .filter(event => !event.isAbakomOnly)
+      .filter((event) => !event.isAbakomOnly)
       .map(({ id }) => callAPI(`${API_URL}/events/${id}/`, accessToken))
   );
 
@@ -98,6 +98,33 @@ function getActiveFrom(pool) {
   return `Allerede åpen!`;
 }
 
+function getJobType(jobType) {
+  switch (jobType) {
+    case 'full_time':
+      return 'Fulltid';
+    case 'summer_job':
+      return 'Sommerjobb';
+    case 'part_time':
+      return 'Deltid';
+      return 'Sommerjobb';
+    default:
+      return jobType;
+  }
+}
+
+function getJobYears(fromYear, toYear) {
+  return fromYear === toYear ? `${fromYear}. Klasse` : `${fromYear}. - ${toYear}. Klasse`;
+}
+
+async function retrieveJoblistings() {
+  const today = new Date();
+  const yesterday = new Date().setDate(today.getDate() - 1);
+  const date = dateFns.format(yesterday, 'YYYY-MM-DD');
+  const qs = querystring.stringify({ created_after: date });
+  const res = await callAPI(`${API_URL}/joblistings/?${qs}`, accessToken);
+  return res.results;
+}
+
 /**
  * Builds a Slack attachment for each event,
  * see https://api.slack.com/docs/message-attachments.
@@ -105,10 +132,10 @@ function getActiveFrom(pool) {
 function buildAttachments(events) {
   return events.map((event, i) => {
     const pretext = i === 0 ? 'Arrangementer med påmelding i dag:' : '';
-    const fields = event.pools.map(pool => {
+    const fields = event.pools.map((pool) => {
       return {
         title: pool.name,
-        value: getActiveFrom(pool)
+        value: getActiveFrom(pool),
       };
     });
 
@@ -124,9 +151,70 @@ function buildAttachments(events) {
       author_name: 'Abakus',
       author_icon: 'https://abakus.no/icon-48x48.png',
       text: event.description,
-      thumb_url: event.cover
+      thumb_url: event.cover,
     };
   });
+}
+
+function buildJoblistingBlocks(joblistings) {
+  const blocks = joblistings.flatMap((joblisting, i) => {
+    const deadline = dateFns.format(joblisting.deadline, 'D. MMMM YYYY HH:mm', { locale: nb });
+
+    return [
+      {
+        type: 'section',
+        fields: [
+          {
+            type: 'mrkdwn',
+            text: `*<${WEBAPP_URL}/joblistings/${joblisting.id}|${joblisting.title}>*`,
+          },
+          {
+            type: 'mrkdwn',
+            text: `*Type:* ${getJobType(joblisting.jobType)}`,
+          },
+          {
+            type: 'mrkdwn',
+            text: `${joblisting.company.name}`,
+          },
+          {
+            type: 'mrkdwn',
+            text: `*Sted*: ${joblisting.workplaces.map((w) => w.town).join(', ') || '_ukjent_'}`,
+          },
+          {
+            type: 'mrkdwn',
+            text: `*Årstrinn*: ${getJobYears(joblisting.fromYear, joblisting.toYear)}`,
+          },
+        ],
+        accessory: {
+          type: 'image',
+          image_url: joblisting.company.thumbnail,
+          alt_text: `${joblisting.company.name} logo`,
+        },
+      },
+      {
+        type: 'context',
+        elements: [
+          {
+            type: 'plain_text',
+            text: `Søknadsfrist ${deadline}`,
+          },
+        ],
+      },
+      {
+        type: 'divider',
+      },
+    ];
+  });
+
+  const header = {
+    type: 'header',
+    text: {
+      type: 'plain_text',
+      text: 'Nye jobbanonser i dag:',
+    },
+  };
+
+  return [header, ...blocks];
 }
 
 /**
@@ -136,12 +224,23 @@ function buildAttachments(events) {
 async function notifySlack(events) {
   const webhook = new IncomingWebhook(process.env.WEBHOOK_URL, {
     username: 'Abakus',
-    icon_url: 'https://abakus.no/icon-512x512.png'
+    icon_url: 'https://abakus.no/icon-512x512.png',
   });
 
   webhook.send = promisify(webhook.send);
   const attachments = buildAttachments(events);
   await webhook.send({ attachments });
+}
+
+async function notifySlackJoblistings(joblistings) {
+  const webhook = new IncomingWebhook(process.env.WEBHOOK_URL_JOBLISTINGS, {
+    username: 'Abakus',
+    icon_url: 'https://abakus.no/icon-512x512.png',
+  });
+
+  webhook.send = promisify(webhook.send);
+  const blocks = buildJoblistingBlocks(joblistings);
+  await webhook.send({ text: 'Nye jobbanonser i dag', blocks });
 }
 
 async function run() {
@@ -151,8 +250,16 @@ async function run() {
     }
     const events = await retrieveEvents();
     if (events.length > 0) {
-      events.forEach(event => console.log(` - ${event.title} `));
+      events.forEach((event) => console.log(` - ${event.title} `));
       await notifySlack(events);
+    }
+
+    const joblistings = await retrieveJoblistings();
+    if (joblistings.length > 0) {
+      joblistings.forEach((joblisting) =>
+        console.log(` - ${joblisting.company.name}: ${joblisting.title}`)
+      );
+      await notifySlackJoblistings(joblistings);
     }
   } catch (e) {
     console.error('Error', e);

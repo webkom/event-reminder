@@ -6,5 +6,5 @@ module.exports = {
   BASE_URL,
   API_URL: `${BASE_URL}/api/v1`,
   REDIRECT_URI: 'http://localhost:3000/callback',
-  WEBAPP_URL: isProduction ? 'https://abakus.no' : 'https://webapp-staging.abakus.no'
+  WEBAPP_URL: isProduction ? 'https://abakus.no' : 'https://webapp-staging.abakus.no',
 };
