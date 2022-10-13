@@ -45,6 +45,14 @@ function getInitialTokens() {
   }
 }
 
+function createEventLink(id) {
+  return `${WEBAPP_URL}/events/${id}/?source=slack&utm_campaign=event-reminder`;
+}
+
+function createJobLink(id) {
+  return `${WEBAPP_URL}/joblistings/${id}/?source=slack&utm_campaign=event-reminder`;
+}
+
 /**
  * Refreshes the current access token to avoid expiration.
  */
@@ -147,7 +155,7 @@ function buildAttachments(events) {
       footer,
       color: EVENT_COLORS[event.eventType],
       title: event.title,
-      title_link: `${WEBAPP_URL}/events/${event.id}`,
+      title_link: createEventLink(event.id),
       author_name: 'Abakus',
       author_icon: 'https://abakus.no/icon-48x48.png',
       text: event.description,
@@ -166,7 +174,7 @@ function buildJoblistingBlocks(joblistings) {
         fields: [
           {
             type: 'mrkdwn',
-            text: `*<${WEBAPP_URL}/joblistings/${joblisting.id}|${joblisting.title}>*`,
+            text: `*<${createJobLink(joblisting.id)}|${joblisting.title}>*`,
           },
           {
             type: 'mrkdwn',
