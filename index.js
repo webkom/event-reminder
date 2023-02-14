@@ -16,7 +16,9 @@ const TOKEN_FILE = 'tokens.json';
 const EVENT_COLORS = {
   company_presentation: '#A1C34A',
   lunch_presentation: '#A1C34A',
+  alternative_presentation: '#8A2BE2',
   course: '#52B0EC',
+  breakfast_talk: '#86D1D0',
   party: '#FCD748',
   social: '#B11C11',
   event: '#B11C11',
